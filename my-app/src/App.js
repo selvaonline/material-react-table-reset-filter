@@ -1,17 +1,20 @@
 import data from "./data.json";
-import { useState, useMemo, useEffect } from "react";
-import axios from "axios";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { MaterialReactTable } from "material-react-table";
-//import {EditAutocomplete} from './EditAutocomplete'
 
 export function App() {
   const [tableData, setTableData] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState([]);
+  const [resetKey, setResetKey] = useState(0); // Key for forced re-render
+  const tableRef = useRef(null);
 
   const resetFilters = () => {
     setColumnFilters([]);
     setGlobalFilter("");
+    setSorting([]);
+    setResetKey((prevKey) => prevKey + 1); // Trigger re-render
   };
 
   const columns = useMemo(
@@ -35,50 +38,41 @@ export function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        /** Actual API call goes here */
-
-        // Simulate fetching data with setTimeout
         setTimeout(() => {
-          // Simulated response data
-
           setTableData(data);
-        }, 1000); // Simulate a delay of 1 second (1000 milliseconds)
+        }, 1000);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
-    fetchData(); // Call the async function immediately inside useEffect
-
-    // Since there's no cleanup needed, return an empty function
-    return () => {};
+    fetchData();
+    return () => {}; // Cleanup (not needed here)
   }, []);
 
   const onRowUpdate = async ({ row, values, table }) => {
-    console.log("row", row, "values", values);
-
-    // setTableData(tableData.map((d, i) => row.index === i ? {...values}: d))
-
-    // table.setEditingRow(null);
-
-    /** API call for updating the data */
     try {
-      const response = await axios.put(`your_api_endpoint/${row.id}`, values);
-      setTableData(
-        tableData.map((d) => (d.id === row.id ? { ...response.data } : d))
+      const response = await fetch(`http://localhost:3000/data/${row.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const updatedData = await response.json();
+
+      // Update tableData state based on response from server
+      setTableData((prevTableData) =>
+        prevTableData.map((d) => (d.id === row.id ? updatedData : d))
       );
+
       table.setEditingRow(null);
     } catch (error) {
       console.error("Error updating row:", error);
     }
   };
 
-  console.log("columnFilters", columnFilters);
-  console.log("globalFilter", globalFilter);
-
   return (
     <div>
-      <button onClick={resetFilters}>Reset Filters</button>
+      <button onClick={resetFilters}>Reset Filters & Sorting</button>
       <MaterialReactTable
         columns={columns}
         data={tableData}
@@ -93,6 +87,10 @@ export function App() {
         onGlobalFilterChange={setGlobalFilter}
         columnFilters={columnFilters}
         globalFilter={globalFilter}
+        state={{ sorting }} // Connect sorting state
+        onSortingChange={setSorting} // Update sorting state
+        key={resetKey} // Force re-render on reset
+        ref={tableRef}
       />
     </div>
   );
