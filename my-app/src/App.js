@@ -2,10 +2,10 @@ import data from './data.json'
 import {useState,useMemo, useEffect} from 'react';
 import axios from 'axios';
 import {MaterialReactTable}from 'material-react-table';
-import {EditAutocomplete} from './EditAutocomplete'
+//import {EditAutocomplete} from './EditAutocomplete'
 
 
-export function Example(){
+export function App(){
 
     const [tableData, setTableData] = useState([]);
     const [columnFilters, setColumnFilters] = useState([]);
@@ -30,15 +30,7 @@ export function Example(){
           {
             accessorKey: 'age', 
             header: 'Age',
-          },
-          {
-            accessorKey: 'value', 
-            header: 'Value',
-            Edit: (props)=>{
-              console.log('props', props)
-              return <EditAutocomplete {...props} />
-            }
-          },
+          }
         ],
         [],
       );
@@ -111,3 +103,4 @@ export function Example(){
        </div>;
 }
 
+ 
